@@ -1,6 +1,6 @@
 {
   "name": "code",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "private": true,
   "description": "Source trees held in Known: files with history, edited over an API by any agent, checked on every write",
   "type": "module",

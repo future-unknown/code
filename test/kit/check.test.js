@@ -12,6 +12,11 @@ describe('checks', () => {
     problems.should.match([{ line: 2, column: 7 }])
   })
 
+  it('says a module that does not parse has its imports unchecked', () => {
+    analyze('a.js', 'import x from "x"\nconst = 2\n').problems[0].message.should.endWith('(its imports are checked once it parses)')
+    analyze('a.css', 'a { color: red\n').problems.forEach((problem) => problem.message.should.not.match(/imports are checked/))
+  })
+
   it('parses JSX and TypeScript, and finds their imports', () => {
     analyze('a.jsx', 'import x from "./x.js"\nexport default () => <div>{x}</div>\n').refs.should.match([{ specifier: './x.js', line: 1 }])
     analyze('a.ts', 'import type { T } from "./t.js"\nimport { v } from "./v.js"\nexport const n: number = v\n').refs.map((ref) => ref.specifier).should.eql(['./v.js'])
@@ -47,8 +52,8 @@ describe('checks', () => {
     const { kit, treeId } = await withTree()
     const { problems } = await kit.writeFile({ treeId, path: 'app.js', content: 'import { h } from "preact"\nimport hooks from "preact/hooks"\nimport fs from "node:fs"\n', actor: human })
     messages(problems).should.eql([
-      'app.js:1 preact is not in the import map; pin preact with code.pin',
-      'app.js:2 preact/hooks is not in the import map; pin preact with code.pin',
+      'app.js:1 preact is not in the import map; pin preact to add it',
+      'app.js:2 preact/hooks is not in the import map; pin preact to add it',
       'app.js:3 node:fs is a Node module; a site runs in the browser'
     ])
     const pinned = await kit.pin({ treeId, package: 'preact', actor: human })
@@ -64,7 +69,7 @@ describe('checks', () => {
       actor: human
     })
     messages(problems).should.eql([
-      'index.html:2 this tree\'s import map is imports.json, which publishing adds to each page; pin packages with code.pin instead of an inline map',
+      'index.html:2 this tree\'s import map is imports.json, which publishing adds to each page; pin packages into it instead of an inline map',
       'index.html:4 ./x.js is not a file in this tree'
     ])
   })
