@@ -12,6 +12,11 @@ describe('checks', () => {
     problems.should.match([{ line: 2, column: 7 }])
   })
 
+  it('says markup in a .js file belongs in a .jsx file or an htm string', () => {
+    analyze('a.js', 'export const a = <div>hi</div>\n').problems[0].message.should.startWith('markup outside a string: JSX belongs in a .jsx file')
+    analyze('a.jsx', 'export const a = <div>hi</div>\n').problems.should.be.empty()
+  })
+
   it('says a module that does not parse has its imports unchecked', () => {
     analyze('a.js', 'import x from "x"\nconst = 2\n').problems[0].message.should.endWith('(its imports are checked once it parses)')
     analyze('a.css', 'a { color: red\n').problems.forEach((problem) => problem.message.should.not.match(/imports are checked/))
@@ -21,6 +26,25 @@ describe('checks', () => {
     analyze('a.jsx', 'import x from "./x.js"\nexport default () => <div>{x}</div>\n').refs.should.match([{ specifier: './x.js', line: 1 }])
     analyze('a.ts', 'import type { T } from "./t.js"\nimport { v } from "./v.js"\nexport const n: number = v\n').refs.map((ref) => ref.specifier).should.eql(['./v.js'])
     analyze('a.tsx', 'const a = <b>\n').problems.should.not.be.empty()
+  })
+
+  it('reads the names an import takes and a module exports', () => {
+    const { refs, exports } = analyze('a.js', "import x, { a as b, 'd-e' as f } from './x.js'\nimport * as ns from './y.js'\nimport './z.js'\nexport { q } from './q.js'\nexport const k = 1\nexport default 2\n")
+    refs.map((ref) => ref.names).should.eql([['default', 'a', 'd-e'], undefined, [], ['q']])
+    exports.should.eql(['q', 'k', 'default'])
+    should(analyze('b.js', "export * from './x.js'\n").exports).be.null()
+    analyze('c.ts', 'import { type T, v } from "./v.js"\nexport enum E { A }\nexport type Z = number\nexport const n = v\n').should.match({ refs: [{ names: ['v'] }], exports: ['E', 'n'] })
+  })
+
+  it('says when an import takes a name its file does not export', async () => {
+    const { kit, treeId } = await withTree()
+    await kit.writeFile({ treeId, path: 'lib.js', content: 'export const SCALE = [1, 2, 3, 4]\n', actor: human })
+    await kit.writeFile({ treeId, path: 'all.js', content: 'export * from "./lib.js"\n', actor: human })
+    const { problems } = await kit.writeFile({ treeId, path: 'app.js', content: 'import { SCALE, SCALES } from "./lib.js"\nimport lib from "./lib.js"\nimport { anything } from "./all.js"\nimport * as everything from "./lib.js"\n', actor: human })
+    messages(problems).should.eql([
+      'app.js:1 ./lib.js has no export named SCALES',
+      'app.js:2 ./lib.js has no default export'
+    ])
   })
 
   it('returns the tree\'s problems with every write', async () => {

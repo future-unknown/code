@@ -15,7 +15,7 @@ SKILL.md   how an agent works on a tree with no filesystem and no bundler
 
 - **A tree** is a named set of files. Paths are slash-separated; folders are implied by the files in them. Addresses join the two with a colon: `hello:src/app.js`.
 - **A change** is one write: who made it, why, and what it did to each path it touched. Contents are stored once by SHA-256 (`code_blobs`); a change's revisions say which contents each path was left with, or that the file was removed (`code_revisions`); the tree as it is now is `code_files`. Any earlier state is read back from the revisions. A move is a removal and a revision that names where it came from, so history follows a file through it.
-- **Checks** run on every write, over the whole tree, and come back as `problems`: files that do not parse (esbuild), imports that resolve to nothing (es-module-lexer, browser resolution rules: no extensions added), HTML and CSS references to missing files (parse5), and bare package names missing from the import map. Analyses are cached by extension and contents.
+- **Checks** run on every write, over the whole tree, and come back as `problems`: files that do not parse (esbuild), imports that resolve to nothing (es-module-lexer, browser resolution rules: no extensions added), names imported from a tree's file that it does not export, HTML and CSS references to missing files (parse5), and bare package names missing from the import map. Analyses are cached by extension and contents.
 - **The import map** is `imports.json` at the tree's root, in the browser's import-map shape. `code.pin` asks the npm registry which exact version a name (and an optional version, range or tag) means, and pins it on esm.sh with its subpaths.
 
 ## Storage
