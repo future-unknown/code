@@ -20,7 +20,7 @@ SKILL.md   how an agent works on a tree with no filesystem and no bundler
 
 ## Storage
 
-The kit is handed a better-sqlite3 connection and never opens one. Its tables are prefixed `code_` and its migrations are tracked in `code_migrations`, so it can share a database with other packages: Known keeps code trees in each org's wiki file. Files are capped at 1 MiB and trees at 1,000 files while binaries live in SQLite.
+The kit is handed a better-sqlite3 connection and never opens one. Its tables are prefixed `code_` and its migrations are tracked in `code_migrations`, so it can share a database with other packages. Known keeps each org's trees in a file of their own, apart from its wikis. Files are capped at 1 MiB and trees at 1,000 files while binaries live in SQLite.
 
 ## Methods
 
