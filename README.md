@@ -21,7 +21,7 @@ SKILL.md   how an agent works on a tree with no filesystem and no bundler
 
 ## Publishing
 
-`publishFiles(kit, {treeId, changeId?})` lists a tree's files, now or as of a change, as `{name, size, sha256, content()}`: the shape surge-stream's `publishEntries` takes. Nothing touches a file system, and contents are read from the tree only when the host asks for them; its hashes are the tree's own. Files go as they are stored, except HTML pages, which gain `imports.json` as an inline `<script type="importmap">` just inside `<head>` (a page with its own map keeps it). JSX and TypeScript are not transformed yet. The host (knapi) chooses the address and holds the credentials.
+`publishFiles(kit, {treeId, changeId?})` lists a tree's files, now or as of a change, as `{name, size, sha256, content()}`: the shape surge-stream's `publishEntries` takes. Nothing touches a file system, and contents are read from the tree only when the host asks for them; its hashes are the tree's own. Files go as they are stored, except HTML pages, which gain `imports.json` as an inline `<script type="importmap">` just inside `<head>` (a page with its own map keeps it), followed by whatever the host passes as `head` (Known adds the site's settings). JSX and TypeScript are not transformed yet. The host (knapi) chooses the address and holds the credentials.
 
 ## Storage
 

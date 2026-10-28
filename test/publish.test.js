@@ -1,7 +1,7 @@
 import should from 'should'
 import { createHash } from 'node:crypto'
 import { withTree, human } from './kit/helpers.js'
-import { publishFiles, withImportMap, inlineImportMap } from '../lib/publish/index.js'
+import { publishFiles, withHead, inlineImportMap } from '../lib/publish/index.js'
 
 const sha = (text) => createHash('sha256').update(text).digest('hex')
 const MAP = '<script type="importmap">{}</script>'
@@ -65,16 +65,30 @@ describe('publishing a tree', () => {
   })
 
   it('puts the map inside head, else inside html, else before the first element', () => {
-    withImportMap('<html lang="en"><head><meta charset="utf-8"></head></html>', MAP).should.equal(`<html lang="en"><head>\n${MAP}\n<meta charset="utf-8"></head></html>`)
-    withImportMap('<!doctype html><html lang="en"><title>Hi</title></html>', MAP).should.equal(`<!doctype html><html lang="en">\n${MAP}\n<title>Hi</title></html>`)
-    withImportMap('<!doctype html><title>Hi</title><h1>Hello</h1>', MAP).should.equal(`<!doctype html>\n${MAP}\n<title>Hi</title><h1>Hello</h1>`)
-    withImportMap('<!doctype html>', MAP).should.equal(`<!doctype html>\n${MAP}\n`)
-    withImportMap('', MAP).should.equal(`\n${MAP}\n`)
+    withHead('<html lang="en"><head><meta charset="utf-8"></head></html>', { importMap: MAP }).should.equal(`<html lang="en"><head>\n${MAP}\n<meta charset="utf-8"></head></html>`)
+    withHead('<!doctype html><html lang="en"><title>Hi</title></html>', { importMap: MAP }).should.equal(`<!doctype html><html lang="en">\n${MAP}\n<title>Hi</title></html>`)
+    withHead('<!doctype html><title>Hi</title><h1>Hello</h1>', { importMap: MAP }).should.equal(`<!doctype html>\n${MAP}\n<title>Hi</title><h1>Hello</h1>`)
+    withHead('<!doctype html>', { importMap: MAP }).should.equal(`<!doctype html>\n${MAP}\n`)
+    withHead('', { importMap: MAP }).should.equal(`\n${MAP}\n`)
+  })
+
+  it("adds the host's head to every page, after the import map, and to a page with its own map", async () => {
+    const { kit, treeId } = await withTree()
+    await kit.writeFile({ treeId, path: 'index.html', content: '<head><title>Hi</title></head>\n', actor: human })
+    await kit.writeFile({ treeId, path: 'app.js', content: 'x\n', actor: human })
+    const head = '<script type="application/json" id="site">{"a":1}</script>'
+    const { entries } = await publishFiles(kit, { treeId, head })
+    entries.find((entry) => entry.name === 'index.html').content().toString().should.equal(`<head>\n${head}\n<title>Hi</title></head>\n`)
+    entries.find((entry) => entry.name === 'app.js').content().toString().should.equal('x\n')
+    await kit.pin({ treeId, package: 'preact', actor: human })
+    const page = (await publishFiles(kit, { treeId, head })).entries.find((entry) => entry.name === 'index.html').content().toString()
+    page.indexOf('importmap').should.be.below(page.indexOf('id="site"'))
+    withHead('<head><script type="importmap">{}</script></head>', { importMap: MAP, head }).should.equal(`<head>\n${head}\n<script type="importmap">{}</script></head>`)
   })
 
   it("keeps a page's own import map and adds none", () => {
     const page = '<head><script type="importmap">{"imports":{}}</script></head>'
-    withImportMap(page, MAP).should.equal(page)
+    withHead(page, { importMap: MAP }).should.equal(page)
   })
 
   it("escapes a closing tag inside the map's URLs", () => {
