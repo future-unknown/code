@@ -72,4 +72,17 @@ describe('the import map', () => {
       await resolve('react', '^20').should.be.rejectedWith(NotFoundError)
     })
   })
+
+  it('pins a package hosted on GitHub at the host\'s release, or an exact one', async () => {
+    const resolve = createRegistryResolver({ fetch: () => { throw new Error('no registry') }, hosted: { wiki: { repo: 'future-unknown/wiki', version: '0.25.0' } } })
+    ;(await resolve('wiki')).should.eql({ name: 'wiki', version: '0.25.0', url: 'https://esm.sh/gh/future-unknown/wiki@v0.25.0' })
+    ;(await resolve('wiki', '0.24.0')).url.should.equal('https://esm.sh/gh/future-unknown/wiki@v0.24.0')
+    await resolve('wiki', '^0.25').should.be.rejectedWith(ValidationError, { message: /exact version/ })
+
+    const { kit, treeId } = await withTree({ resolvePackage: resolve })
+    await kit.pin({ treeId, package: 'wiki', actor: human })
+    ;(await kit.deps({ treeId })).packages.should.eql([{ name: 'wiki', version: '0.25.0', url: 'https://esm.sh/gh/future-unknown/wiki@v0.25.0' }])
+    await kit.writeFile({ treeId, path: 'app.js', content: "import { createSessionStore } from 'wiki/session'\n", actor: human })
+    ;(await kit.check({ treeId })).problems.should.eql([])
+  })
 })
