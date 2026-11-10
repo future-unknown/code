@@ -72,5 +72,6 @@ like pages, and a tree's history is its changes.
 
 ## Starting a tree
 
-`code.create {name, starter: 'html'}` begins with a page, a stylesheet and
-a module script, with no problems. Without a starter the tree is empty.
+`code.create {name, starter: 'html'}` begins with a page, a stylesheet, a
+module script and an icon (`favicon.svg`, linked from the page; Known shows a
+site's icon beside its name, so make it the site's own), with no problems. Without a starter the tree is empty.

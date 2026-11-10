@@ -56,7 +56,7 @@ describe('api', () => {
 
   it('creates a tree from a starter and lists it', async () => {
     const [tree] = await human.list()
-    tree.should.match({ name: 'hello', description: 'A hello world page', files: 3 })
+    tree.should.match({ name: 'hello', description: 'A hello world page', files: 4 })
   })
 
   it('reads, writes and edits by address, returning addresses', async () => {
@@ -93,7 +93,7 @@ describe('api', () => {
     const [first] = (await human.changes('hello:')).slice(-1)
     const restored = await human.restore('hello:', first.id)
     restored.removed.should.eql(['hello:imports.json'])
-    ;(await human.check('hello')).should.match({ files: 3, problems: [] })
+    ;(await human.check('hello')).should.match({ files: 4, problems: [] })
   })
 
   it('gives history, a revision and a change', async () => {

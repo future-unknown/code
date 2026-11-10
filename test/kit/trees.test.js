@@ -19,7 +19,7 @@ describe('trees', () => {
     problems.should.eql([])
     const [change] = await kit.getChanges({ treeId: tree.id })
     change.message.should.equal('start from the html starter')
-    change.files.map((file) => file.action).should.eql(['created', 'created', 'created'])
+    change.files.map((file) => file.action).should.eql(['created', 'created', 'created', 'created'])
   })
 
   it('refuses a taken name, a bad name, and an unknown starter', async () => {
